@@ -246,6 +246,10 @@ Endpoint = 149.34.244.174:51820
 
 [Socks5]
 BindAddress = 127.0.0.1:25344
+
+[SNI]
+BindAddress = 127.0.0.1:24443
+AllowConnToLocal = false
 ```
 
 `/readyz` would respond with

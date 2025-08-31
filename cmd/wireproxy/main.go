@@ -23,9 +23,9 @@ import (
 const daemonProcess = "daemon-process"
 
 // default paths for wireproxy config file
-var default_config_paths = []string {
-    "/etc/wireproxy/wireproxy.conf",
-    os.Getenv("HOME")+"/.config/wireproxy.conf",
+var default_config_paths = []string{
+	"/etc/wireproxy/wireproxy.conf",
+	os.Getenv("HOME") + "/.config/wireproxy.conf",
 }
 
 var version = "1.0.8-dev"
@@ -59,12 +59,12 @@ func executablePath() string {
 
 // check if default config file paths exist
 func configFilePath() (string, bool) {
-    for _, path := range default_config_paths {
-        if _, err := os.Stat(path); err == nil {
-            return path, true
-        }
-    }
-    return "", false
+	for _, path := range default_config_paths {
+		if _, err := os.Stat(path); err == nil {
+			return path, true
+		}
+	}
+	return "", false
 }
 
 func lock(stage string) {
@@ -146,6 +146,12 @@ func lockNetwork(sections []wireproxy.RoutineSpawner, infoAddr *string) {
 			rules = append(rules, landlock.ConnectTCP(uint16(section.BindAddress.Port)))
 		case *wireproxy.Socks5Config:
 			rules = append(rules, landlock.BindTCP(extractPort(section.BindAddress)))
+		// --- NEW: allow SNI listener bind port ---
+		case *wireproxy.SNIConfig:
+			rules = append(rules,
+				landlock.BindTCP(extractPort(section.BindAddress)),
+				landlock.ConnectTCP(443), // needed for upstream TLS to :443
+			)
 		}
 	}
 
@@ -193,12 +199,12 @@ func main() {
 	}
 
 	if *config == "" {
-        if path, config_exist := configFilePath(); config_exist {
-            *config = path
-        } else {
-            fmt.Println("configuration path is required")
-            return
-        }
+		if path, config_exist := configFilePath(); config_exist {
+			*config = path
+		} else {
+			fmt.Println("configuration path is required")
+			return
+		}
 	}
 
 	if !*daemon {
